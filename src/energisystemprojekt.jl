@@ -10,6 +10,9 @@ export runmodel
 
 include("input_energisystemprojekt.jl")
 
+function annualisedCost(investmentCost, lifetime, r)
+    return investmentCost * r / (1 - 1/((1+r)^lifetime))
+
 function buildmodel(input)
 
     println("\nBuilding model...")
