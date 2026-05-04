@@ -59,7 +59,7 @@ function buildmodel(input)
     
     end #constraints
 
-    Systemcost = Dict(r => sum(annualisedCost(investmentCost[p], lifetime[p], discountrate)
+    Systemcost = Dict(r => sum(annualisedCost(investmentCost[p] * 1000.0, lifetime[p], discountrate) * Capacity[r, p]
                                 + variableCost[p] * Electricity[r, p, h]
                                 for p in PLANT, h in HOUR) for r in REGION)
 
