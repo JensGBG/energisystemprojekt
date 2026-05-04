@@ -23,6 +23,7 @@ function buildmodel(input)
             HOUR,
             numregions,
             load,
+            capacityFactor,
             maxcap,
             investmentCost,
             lifetime,
@@ -36,7 +37,7 @@ function buildmodel(input)
 
         Electricity[r in REGION, p in PLANT, h in HOUR]       >= 0.0        # MWh/h
         Capacity[r in REGION, p in PLANT]                     >= 0.0        # MW
-
+        Systemcost[r in REGION]                               >= 0.0        # Euro/year
     end #variables
 
 
@@ -48,10 +49,19 @@ function buildmodel(input)
 
     @constraints m begin
         Generation[r in REGION, p in PLANT, h in HOUR],
-            Electricity[r, p, h] <= Capacity[r, p] # * capacity factor
+            Electricity[r, p, h] <= Capacity[r, p] * capacityFactor[r, p, h]
 
         LoadBalance[r in REGION, h in HOUR],
             sum(Electricity[r, p, h] for p in PLANT) == load[r, h] # MWh/h
+
+        DefineSystemcost[r in REGION],
+            Systemcost[r] == sum(annualisedCost(investmentCost[p] * 1000.0, lifetime[p], discountrate) * Capacity[r, p] for p in PLANT) + sum(variableCost[p] * Electricity[r, p, h] for p in PLANT, h in HOUR)
+
+        ExcludededBatteries[r in REGION, h in HOUR],
+            Electricity[r, :Batteries, h] == 0.0 # MWh/h
+
+        ExcludededTransmission[r in REGION, h in HOUR],
+            Electricity[r, :Transmission, h] == 0.0 # MWh/h
 
         # Is the constraint below necessary?
         #SystemCost[r in REGION],
@@ -59,9 +69,8 @@ function buildmodel(input)
     
     end #constraints
 
-    Systemcost = Dict(r => sum(annualisedCost(investmentCost[p] * 1000.0, lifetime[p], discountrate) * Capacity[r, p]
-                                + variableCost[p] * Electricity[r, p, h]
-                                for p in PLANT, h in HOUR) for r in REGION)
+    #Systemcost = Dict(r => sum(annualisedCost(investmentCost[p] * 1000.0, lifetime[p], discountrate) * Capacity[r, p] for p in PLANT)
+     #                    + sum(variableCost[p] * Electricity[r, p, h] for p in PLANT, h in HOUR) for r in REGION)
 
 
     @objective m Min begin

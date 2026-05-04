@@ -14,16 +14,27 @@ HOUR = 1:8760
 
 #Parameters
 numregions = length(REGION)
+numplants = length(PLANT)
 numhours = length(HOUR)
 
 timeseries = CSV.read("$folder\\TimeSeries.csv", DataFrame)
 wind_cf = AxisArray(ones(numregions, numhours), REGION, HOUR)
+pv_cf = AxisArray(ones(numregions, numhours), REGION, HOUR)
 load = AxisArray(zeros(numregions, numhours), REGION, HOUR)
  
     for r in REGION
-        wind_cf[r, :]=timeseries[:, "Wind_"*"$r"]                                                        # 0-1, share of installed cap
+        wind_cf[r, :]=timeseries[:, "Wind_"*"$r"]                                                        # 0-1, share of installed capacity
+        pv_cf[r, :]=timeseries[:, "PV_"*"$r"]                                                            # 0-1, capacity factor
         load[r, :]=timeseries[:, "Load_"*"$r"]                                                           # [MWh]
     end
+
+capacityFactor = AxisArray(ones(numregions, numplants, numhours), REGION, PLANT, HOUR)
+
+for r in REGION
+        capacityFactor[r, :Wind, :] = wind_cf[r, :]
+        capacityFactor[r, :PV, :] = pv_cf[r, :]
+end
+
 
 myinf = 1e8
 maxcaptable = [                                                             # GW
@@ -127,6 +138,7 @@ discountrate=0.05
                 HOUR,
                 numregions,
                 load,
+                capacityFactor,
                 maxcap,
                 investmentCost,
                 lifetime,
