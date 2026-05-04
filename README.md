@@ -1,3 +1,6 @@
+# TODO
+ - Fixa constraints för hydro
+
 # Energy system project
 To students in MVE347, Chalmers. 
 
