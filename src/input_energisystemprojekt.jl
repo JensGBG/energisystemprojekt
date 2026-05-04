@@ -28,10 +28,10 @@ load = AxisArray(zeros(numregions, numhours), REGION, HOUR)
 myinf = 1e8
 maxcaptable = [                                                             # GW
         # PLANT           DE             SE              DK       
-        :Wind            180            280             90
-        :PV              460            75              60
+        :Wind            180.0          280.0           90.0
+        :PV              460.0          75.0            60.0
         :Gas             myinf          myinf           myinf
-        :Hydro           0              14              0
+        :Hydro           0.0            14.0            0.0
         :Batteries       myinf          myinf           myinf
         :Transmission    myinf          myinf           myinf
         :Nuclear         myinf          myinf           myinf
@@ -41,55 +41,55 @@ maxcap = AxisArray(maxcaptable[:,2:end]'.*1000, REGION, PLANT) # MW
 
 investmentCostTable = [
         # PLANT          euro/kW  
-        :Wind            1100
-        :PV              600
-        :Gas             550
-        :Hydro           0
-        :Batteries       150
-        :Transmission    2500
-        :Nuclear         7700
+        :Wind            1100.0
+        :PV              600.0
+        :Gas             550.0
+        :Hydro           0.0
+        :Batteries       150.0
+        :Transmission    2500.0
+        :Nuclear         7700.0
         ]
 
-investmentCost = AxisArray(investmentCostTable[:,2], PLANT)
+investmentCost = AxisArray(Float64.(investmentCostTable[:,2]), PLANT)
 
 runningCostTable = [
         # PLANT          Running cost [euro/MWh_elec]  
         :Wind            0.1
         :PV              0.1
-        :Gas             2
+        :Gas             2.0
         :Hydro           0.1
         :Batteries       0.1
-        :Transmission    0
-        :Nuclear         4
+        :Transmission    0.0
+        :Nuclear         4.0
         ]
 
-runningCost = AxisArray(runningCostTable[:,2], PLANT)
+runningCost = AxisArray(Float64.(runningCostTable[:,2]), PLANT)
 
 fuelCostTable = [
         # PLANT          Fuel cost [euro/MWh_fuel]  
-        :Wind            0
-        :PV              0
-        :Gas             22
-        :Hydro           0
-        :Batteries       0
-        :Transmission    0
+        :Wind            0.0
+        :PV              0.0
+        :Gas             22.0
+        :Hydro           0.0
+        :Batteries       0.0
+        :Transmission    0.0
         :Nuclear         3.2
         ]
 
-fuelCost = AxisArray(fuelCostTable[:,2], PLANT)
+fuelCost = AxisArray(Float64.(fuelCostTable[:,2]), PLANT)
 
 lifetimeTable = [
         # PLANT          Lifetime (years)  
-        :Wind            25
-        :PV              25
-        :Gas             30
-        :Hydro           80
-        :Batteries       10
-        :Transmission    50
-        :Nuclear         50
+        :Wind            25.0
+        :PV              25.0
+        :Gas             30.0
+        :Hydro           80.0
+        :Batteries       10.0
+        :Transmission    50.0
+        :Nuclear         50.0
         ]
 
-lifetime = AxisArray(lifetimeTable[:,2], PLANT)
+lifetime = AxisArray(Float64.(lifetimeTable[:,2]), PLANT)
 
 efficiencyTable = [
         # PLANT          Efficiency
@@ -102,20 +102,22 @@ efficiencyTable = [
         :Nuclear         0.4
         ]
 
-efficiency = AxisArray(efficiencyTable[:,2], PLANT)
+efficiency = AxisArray(Float64.(efficiencyTable[:,2]), PLANT)
 
 emissionFactorTable = [
         # PLANT          Emission factor [ton CO2/MWh_fuel]  
-        :Wind            0
-        :PV              0
+        :Wind            0.0
+        :PV              0.0
         :Gas             0.202
-        :Hydro           0
-        :Batteries       0
-        :Transmission    0
-        :Nuclear         0
+        :Hydro           0.0
+        :Batteries       0.0
+        :Transmission    0.0
+        :Nuclear         0.0
         ]
 
-emissionFactor = AxisArray(emissionFactorTable[:,2], PLANT)
+emissionFactor = AxisArray(Float64.(emissionFactorTable[:,2]), PLANT)
+
+variableCost = AxisArray(Float64.(runningCost .+ fuelCost ./ efficiency), PLANT)
 
 discountrate=0.05
 
@@ -128,9 +130,9 @@ discountrate=0.05
                 maxcap,
                 investmentCost,
                 lifetime,
-                runningCost,
-                fuelCost,
-                efficiency,
-                emissionFactor)
+                emissionFactor,
+                variableCost,
+                discountrate
+                )
 
 end # read_input

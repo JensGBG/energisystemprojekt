@@ -11,21 +11,31 @@ export runmodel
 include("input_energisystemprojekt.jl")
 
 function annualisedCost(investmentCost, lifetime, r)
-    return investmentCost * r / (1 - 1/((1+r)^lifetime))
+    return investmentCost * r / (1.0 - 1.0/((1.0+r)^lifetime))
 end
 
 function buildmodel(input)
 
     println("\nBuilding model...")
  
-    @unpack REGION, PLANT, HOUR, numregions, load, maxcap = input
+    @unpack REGION,
+            PLANT,
+            HOUR,
+            numregions,
+            load,
+            maxcap,
+            investmentCost,
+            lifetime,
+            emissionFactor,
+            variableCost,
+            discountrate = input
 
     m = Model(Gurobi.Optimizer)
 
     @variables m begin
 
-        Electricity[r in REGION, p in PLANT, h in HOUR]       >= 0        # MWh/h
-        Capacity[r in REGION, p in PLANT]                     >= 0        # MW
+        Electricity[r in REGION, p in PLANT, h in HOUR]       >= 0.0        # MWh/h
+        Capacity[r in REGION, p in PLANT]                     >= 0.0        # MW
 
     end #variables
 
@@ -40,13 +50,24 @@ function buildmodel(input)
         Generation[r in REGION, p in PLANT, h in HOUR],
             Electricity[r, p, h] <= Capacity[r, p] # * capacity factor
 
-        SystemCost[r in REGION],
-            Systemcost[r] >= 0 # sum of all annualized costs
+        LoadBalance[r in REGION, h in HOUR],
+            sum(Electricity[r, p, h] for p in PLANT) == load[r, h] # MWh/h
+
+        # Is the constraint below necessary?
+        #SystemCost[r in REGION],
+        #    Systemcost[r] >= 0 # sum of all annualised costs
     
     end #constraints
 
+    Systemcost = Dict(r => sum(annualisedCost(investmentCost[p], lifetime[p], discountrate)
+                                + variableCost[p] * Electricity[r, p, h]
+                                for p in PLANT, h in HOUR) for r in REGION)
+
 
     @objective m Min begin
+        #sum(annualisedCost(investmentCost[p], lifetime[p], discountrate)
+        #+ variableCost[p] * Electricity[r, p, h]
+        #        for r in REGION, p in PLANT, h in HOUR)
         sum(Systemcost[r] for r in REGION)
     end # objective
 
